@@ -1,0 +1,685 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Chiave - Sistema de Controle de Produtos</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background-color: #f5f7fa; color: #333; line-height: 1.6; }
+        .container { max-width: 1200px; margin: 0 auto; padding: 20px; }
+        header { 
+            background: linear-gradient(135deg, #2c3e50, #1a2530); 
+            color: white; 
+            padding: 20px 0; 
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); 
+            border-bottom: 4px solid #f39c12; 
+        }
+        .header-content { display: flex; justify-content: space-between; align-items: center; max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+        .logo h1 { font-weight: 700; font-size: 28px; }
+        .filters-container { padding: 25px; background-color: #ffffff; border-radius: 10px; margin-top: 30px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); }
+        .search-wrapper { margin-bottom: 20px; }
+        #searchInput { width: 100%; padding: 12px 15px; border-radius: 25px; border: 1px solid #ddd; font-size: 16px; transition: all 0.3s ease; }
+        #searchInput:focus { outline: none; border-color: #f39c12; box-shadow: 0 0 8px rgba(243, 156, 18, 0.2); }
+        .filter-group { margin-bottom: 15px; }
+        .filter-group h3 { font-size: 18px; color: #2c3e50; margin-bottom: 12px; }
+        .filter-buttons button { 
+            background-color: #e9ecef; 
+            border: none; 
+            color: #495057; 
+            padding: 8px 15px; 
+            margin: 5px; 
+            border-radius: 20px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            transition: all 0.3s ease; 
+        }
+        .filter-buttons button:hover { background-color: #ced4da; }
+        .filter-buttons button.active { background-color: #f39c12; color: white; box-shadow: 0 2px 5px rgba(0,0,0,0.15); }
+        .table-container { background: white; border-radius: 10px; overflow-x: auto; box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05); margin-top: 30px; }
+        table { width: 100%; border-collapse: collapse; }
+        thead { background: linear-gradient(to right, #3498db, #2c3e50); color: white; }
+        th, td { padding: 15px 20px; text-align: left; }
+        #stockHeader { cursor: pointer; user-select: none; }
+        #stockArrow { display: inline-block; margin-left: 8px; width: 10px; text-align: center; }
+        tbody tr { border-bottom: 1px solid #eee; }
+        tbody tr:hover { background-color: #f9f9f9; }
+        .stock-low { color: #e74c3c; font-weight: 700; }
+        footer { text-align: center; padding: 20px; color: #7f8c8d; margin-top: 20px; }
+        .overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(10, 10, 10, 0.55);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            visibility: hidden;
+            opacity: 0;
+            transition: visibility 0s 0.2s, opacity 0.2s linear;
+        }
+        .overlay.visible {
+            visibility: visible;
+            opacity: 1;
+            transition: opacity 0.2s linear;
+        }
+        .modal {
+            width: 360px;
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.25);
+            text-align: left;
+        }
+        .modal.modal-large {
+            width: 90%;
+            max-width: 800px;
+        }
+        .modal h2 { margin-bottom: 12px; font-size: 20px; color: #2c3e50; }
+        .modal-row { margin-bottom: 12px; }
+        .modal-row label { display: block; font-size: 13px; color: #444; margin-bottom: 6px; }
+        .modal-row input, .modal-row textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+        }
+        .modal-row textarea {
+            min-height: 400px;
+            resize: vertical;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .modal-actions { display: flex; justify-content: flex-end; margin-top: 10px; gap: 10px; }
+        .modal-feedback { color: #e74c3c; min-height: 18px; margin-top: 6px; font-size: 13px; }
+        .modal-feedback.success { color: #2ecc71; }
+        .btn {
+            background: #2c3e50;
+            border: none;
+            color: white;
+            padding: 10px 14px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn.btn-secondary { background-color: #7f8c8d; }
+        .btn:hover { opacity: 0.95; }
+        .btn:disabled { background: #bdc3c7; cursor: not-allowed; }
+        .settings-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        #settings-gear {
+            width: 50px;
+            height: 50px;
+            background: #2c3e50;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        #settings-gear svg {
+            width: 28px;
+            height: 28px;
+            fill: white;
+            transition: transform 0.3s ease;
+        }
+        #settings-gear:hover svg { transform: rotate(90deg); }
+        #settings-menu {
+            position: absolute;
+            top: 60px;
+            right: 0;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+            overflow: hidden;
+            display: none; /* Controlado via JS */
+            flex-direction: column;
+            width: 200px;
+        }
+        #settings-menu.visible { display: flex; }
+        #settings-menu button {
+            background: none;
+            border: none;
+            padding: 12px 15px;
+            text-align: left;
+            width: 100%;
+            cursor: pointer;
+            border-bottom: 1px solid #eee;
+        }
+        #settings-menu button:last-child { border-bottom: none; }
+        #settings-menu button:hover { background: #f5f7fa; }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="header-content">
+            <div class="logo">
+                <h1>CHIAVE - Controle de Estoque</h1>
+            </div>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="filters-container">
+            <div class="search-wrapper">
+                <input type="text" id="searchInput" placeholder="Pesquisar por nome, marca ou vertical...">
+            </div>
+            <div class="filter-group">
+                <h3>Filtrar por Marca:</h3>
+                <div class="filter-buttons" id="brandFilters"></div>
+            </div>
+            <div class="filter-group">
+                <h3>Filtrar por Vertical:</h3>
+                <div class="filter-buttons" id="verticalFilters"></div>
+            </div>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th>NOME</th>
+                        <th>ID</th>
+                        <th>MARCA</th>
+                        <th>VERTICAL</th>
+                        <th id="stockHeader">
+                            ESTOQUE <span id="stockArrow">↕</span>
+                        </th>
+                    </tr>
+                </thead>
+                <tbody id="productTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+    
+    <footer>
+        <p>Chiave &copy; 2025 - Sistema de Controle de Produtos</p>
+    </footer>
+
+    <div class="settings-container">
+        <div id="settings-gear">
+            <svg viewBox="0 0 24 24">
+                <path d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61-.25-1.17-.59-1.69-.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24-.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+            </svg>
+        </div>
+        <div id="settings-menu">
+            <button id="management-btn">Gerenciamento</button>
+            <button id="edit-products-btn">Editar Produtos</button>
+            <button id="connections-btn">Conexão</button>
+        </div>
+    </div>
+
+    <div id="loginOverlay" class="overlay visible">
+        <div class="modal">
+            <h2>Entre com seu e-mail</h2>
+            <div class="modal-row">
+                <label for="loginEmail">E-mail</label>
+                <input id="loginEmail" type="email" placeholder="seu@exemplo.com" />
+            </div>
+            <div class="modal-row">
+                <label for="loginPassword">Senha</label>
+                <input id="loginPassword" type="password" placeholder="Senha" />
+            </div>
+            <div id="loginError" class="modal-feedback" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="loginButton" class="btn">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="managementPasswordOverlay" class="overlay">
+        <div class="modal">
+            <h2>Acesso à Administração</h2>
+            <p>Por favor, insira a senha de acesso.</p>
+            <div class="modal-row">
+                <label for="managementPassword">Senha</label>
+                <input id="managementPassword" type="password" />
+            </div>
+            <div id="managementPasswordError" class="modal-feedback" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="managementPasswordCancel" class="btn btn-secondary">Cancelar</button>
+                <button id="managementPasswordSubmit" class="btn">Entrar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="authEditorOverlay" class="overlay">
+        <div class="modal modal-large">
+            <h2>Editor de Autenticação (auth.csv)</h2>
+            <div class="modal-row">
+                <label for="authEditorTextarea">Conteúdo do arquivo:</label>
+                <textarea id="authEditorTextarea"></textarea>
+            </div>
+            <div id="authEditorFeedback" class="modal-feedback" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="authEditorExit" class="btn btn-secondary">Sair</button>
+                <button id="authEditorSave" class="btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="databaseEditorOverlay" class="overlay">
+        <div class="modal modal-large">
+            <h2>Editor de Produtos (database.csv)</h2>
+            <div class="modal-row">
+                <label for="databaseEditorTextarea">Conteúdo do arquivo:</label>
+                <textarea id="databaseEditorTextarea"></textarea>
+            </div>
+            <div id="databaseEditorFeedback" class="modal-feedback" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="databaseEditorExit" class="btn btn-secondary">Sair</button>
+                <button id="databaseEditorSave" class="btn">Salvar</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para o Visualizador de Logs (NOVO) -->
+    <div id="logViewerOverlay" class="overlay">
+        <div class="modal modal-large">
+            <h2>Registro de Conexões (registro_acessos.csv)</h2>
+            <div class="modal-row">
+                <label for="logViewerTextarea">Conteúdo do arquivo de log:</label>
+                <textarea id="logViewerTextarea" readonly></textarea>
+            </div>
+            <div id="logViewerFeedback" class="modal-feedback" aria-live="polite"></div>
+            <div class="modal-actions">
+                <button id="logViewerExit" class="btn btn-secondary">Fechar</button>
+            </div>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // --- Seletores de Elementos ---
+    const tableBody = document.getElementById('productTableBody');
+    const searchInput = document.getElementById('searchInput');
+    const brandFiltersContainer = document.getElementById('brandFilters');
+    const verticalFiltersContainer = document.getElementById('verticalFilters');
+    const stockHeader = document.getElementById('stockHeader');
+    const stockArrow = document.getElementById('stockArrow');
+
+    // Login UI
+    const loginOverlay = document.getElementById('loginOverlay');
+    const loginButton = document.getElementById('loginButton');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginError = document.getElementById('loginError');
+
+    // Settings UI (Engrenagem)
+    const settingsGear = document.getElementById('settings-gear');
+    const settingsMenu = document.getElementById('settings-menu');
+    const managementBtn = document.getElementById('management-btn');
+    const editProductsBtn = document.getElementById('edit-products-btn');
+    const connectionsBtn = document.getElementById('connections-btn'); // NOVO
+
+    // Management Password UI
+    const managementPasswordOverlay = document.getElementById('managementPasswordOverlay');
+    const managementPasswordInput = document.getElementById('managementPassword');
+    const managementPasswordSubmit = document.getElementById('managementPasswordSubmit');
+    const managementPasswordCancel = document.getElementById('managementPasswordCancel');
+    const managementPasswordError = document.getElementById('managementPasswordError');
+
+    // Auth Editor UI
+    const authEditorOverlay = document.getElementById('authEditorOverlay');
+    const authEditorTextarea = document.getElementById('authEditorTextarea');
+    const authEditorSave = document.getElementById('authEditorSave');
+    const authEditorExit = document.getElementById('authEditorExit');
+    const authEditorFeedback = document.getElementById('authEditorFeedback');
+
+    // Database Editor UI
+    const databaseEditorOverlay = document.getElementById('databaseEditorOverlay');
+    const databaseEditorTextarea = document.getElementById('databaseEditorTextarea');
+    const databaseEditorSave = document.getElementById('databaseEditorSave');
+    const databaseEditorExit = document.getElementById('databaseEditorExit');
+    const databaseEditorFeedback = document.getElementById('databaseEditorFeedback');
+    
+    // NOVO: Log Viewer UI
+    const logViewerOverlay = document.getElementById('logViewerOverlay');
+    const logViewerTextarea = document.getElementById('logViewerTextarea');
+    const logViewerExit = document.getElementById('logViewerExit');
+    const logViewerFeedback = document.getElementById('logViewerFeedback');
+
+    // --- Estado da Aplicação ---
+    let allProducts = [];
+    let activeBrand = 'all';
+    let activeVertical = 'all';
+    let stockSortOrder = null;
+    let actionAfterPassword = null;
+
+    // --- Funções da Tabela Principal ---
+    function renderTable(products) {
+        tableBody.innerHTML = '';
+        if (products.length === 0) {
+            const row = tableBody.insertRow();
+            const cell = row.insertCell();
+            cell.colSpan = 5;
+            cell.textContent = 'Nenhum produto encontrado.';
+            cell.style.textAlign = 'center';
+            cell.style.padding = '20px';
+        } else {
+            products.forEach(product => {
+                const row = tableBody.insertRow();
+                row.insertCell().textContent = product.NOME || 'N/A';
+                row.insertCell().textContent = product.Id || 'N/A';
+                row.insertCell().textContent = product.MARCA || 'N/A';
+                row.insertCell().textContent = product.VERTICAL || 'N/A';
+                const stockCell = row.insertCell();
+                const stock = parseInt(product.ESTOQUE, 10);
+                stockCell.textContent = isNaN(stock) ? '0' : stock;
+                if (stock < 5) {
+                    stockCell.classList.add('stock-low');
+                    stockCell.textContent = `⚠️ ${stock}`;
+                }
+            });
+        }
+    }
+
+    function applyFiltersAndSort() {
+        const searchTerm = searchInput.value.toLowerCase();
+        let filteredProducts = allProducts.filter(p => {
+            const matchesSearch = searchTerm ?
+                (p.NOME || '').toLowerCase().includes(searchTerm) ||
+                (p.MARCA || '').toLowerCase().includes(searchTerm) ||
+                (p.VERTICAL || '').toLowerCase().includes(searchTerm)
+                : true;
+            const brand = p.MARCA || '';
+            const vertical = p.VERTICAL || '';
+            const matchesBrand = activeBrand === 'all' || brand === activeBrand;
+            const matchesVertical = activeVertical === 'all' || vertical === activeVertical;
+            return matchesSearch && matchesBrand && matchesVertical;
+        });
+        if (stockSortOrder === 'asc') {
+            filteredProducts.sort((a, b) => (parseInt(a.ESTOQUE, 10) || 0) - (parseInt(b.ESTOQUE, 10) || 0));
+        } else if (stockSortOrder === 'desc') {
+            filteredProducts.sort((a, b) => (parseInt(b.ESTOQUE, 10) || 0) - (parseInt(a.ESTOQUE, 10) || 0));
+        }
+        renderTable(filteredProducts);
+    }
+
+    function createFilterButtons(container, items, filterType) {
+        container.innerHTML = '<button class="active" data-filter="all">Todas</button>';
+        items.forEach(item => {
+            if (item) {
+                const button = document.createElement('button');
+                button.textContent = item;
+                button.dataset.filter = item;
+                container.appendChild(button);
+            }
+        });
+        container.addEventListener('click', function(e) {
+            if (e.target.tagName === 'BUTTON') {
+                const filterValue = e.target.dataset.filter;
+                if (filterType === 'brand') activeBrand = filterValue;
+                else if (filterType === 'vertical') activeVertical = filterValue;
+                container.querySelector('.active').classList.remove('active');
+                e.target.classList.add('active');
+                applyFiltersAndSort();
+            }
+        });
+    }
+
+    // --- Inicialização da Aplicação ---
+    async function initializeApp() {
+        try {
+            const response = await fetch('/api/products');
+            if (!response.ok) throw new Error(`Erro na rede: ${response.statusText}`);
+            allProducts = await response.json();
+            const uniqueBrands = [...new Set(allProducts.map(p => p.MARCA))].sort();
+            const uniqueVerticals = [...new Set(allProducts.map(p => p.VERTICAL))].sort();
+            createFilterButtons(brandFiltersContainer, uniqueBrands, 'brand');
+            createFilterButtons(verticalFiltersContainer, uniqueVerticals, 'vertical');
+            searchInput.addEventListener('input', applyFiltersAndSort);
+            stockHeader.addEventListener('click', () => {
+                if (stockSortOrder === 'asc') {
+                    stockSortOrder = 'desc';
+                    stockArrow.textContent = '↓';
+                } else if (stockSortOrder === 'desc') {
+                    stockSortOrder = null;
+                    stockArrow.textContent = '↕';
+                } else {
+                    stockSortOrder = 'asc';
+                    stockArrow.textContent = '↑';
+                }
+                applyFiltersAndSort();
+            });
+            applyFiltersAndSort();
+        } catch (error) {
+            console.error('Falha ao carregar os dados dos produtos:', error);
+            tableBody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:red;">Erro ao carregar os dados.</td></tr>`;
+        }
+    }
+
+    // --- Lógica de Login ---
+    async function attemptLogin() {
+        loginError.textContent = '';
+        const email = loginEmail.value.trim();
+        const password = loginPassword.value;
+        if (!email || !password) {
+            loginError.textContent = 'Preencha e-mail e senha.';
+            return;
+        }
+        loginButton.disabled = true;
+        loginButton.textContent = 'Entrando...';
+        try {
+            const res = await fetch('/api/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (res.ok && data.success) {
+                loginOverlay.classList.remove('visible');
+                initializeApp();
+            } else {
+                loginError.textContent = data.message || 'Credenciais inválidas.';
+            }
+        } catch (err) {
+            console.error('Erro no login:', err);
+            loginError.textContent = 'Erro de rede ao tentar autenticar.';
+        } finally {
+            loginButton.disabled = false;
+            loginButton.textContent = 'Entrar';
+        }
+    }
+    
+    // --- Lógica de Configurações e Editores ---
+    settingsGear.addEventListener('click', () => {
+        settingsMenu.classList.toggle('visible');
+    });
+
+    document.addEventListener('click', (e) => {
+        if (!settingsGear.contains(e.target) && !settingsMenu.contains(e.target)) {
+            settingsMenu.classList.remove('visible');
+        }
+    });
+
+    managementBtn.addEventListener('click', () => {
+        actionAfterPassword = 'openAuthEditor';
+        settingsMenu.classList.remove('visible');
+        managementPasswordOverlay.classList.add('visible');
+        managementPasswordInput.focus();
+    });
+
+    editProductsBtn.addEventListener('click', () => {
+        actionAfterPassword = 'openDatabaseEditor';
+        settingsMenu.classList.remove('visible');
+        managementPasswordOverlay.classList.add('visible');
+        managementPasswordInput.focus();
+    });
+    
+    // NOVO: Evento para o botão Conexão
+    connectionsBtn.addEventListener('click', () => {
+        actionAfterPassword = 'openLogViewer';
+        settingsMenu.classList.remove('visible');
+        managementPasswordOverlay.classList.add('visible');
+        managementPasswordInput.focus();
+    });
+
+    managementPasswordCancel.addEventListener('click', () => {
+        managementPasswordOverlay.classList.remove('visible');
+        managementPasswordInput.value = '';
+        managementPasswordError.textContent = '';
+        actionAfterPassword = null;
+    });
+
+    managementPasswordSubmit.addEventListener('click', () => {
+        const password = managementPasswordInput.value;
+        if (password === "SenhaForte10@") {
+            managementPasswordOverlay.classList.remove('visible');
+            managementPasswordInput.value = '';
+            managementPasswordError.textContent = '';
+            
+            if (actionAfterPassword === 'openAuthEditor') {
+                openAuthEditor();
+            } else if (actionAfterPassword === 'openDatabaseEditor') {
+                openDatabaseEditor();
+            } else if (actionAfterPassword === 'openLogViewer') { // ALTERADO
+                openLogViewer();
+            }
+            actionAfterPassword = null;
+        } else {
+            managementPasswordError.textContent = "Senha incorreta. Tente novamente.";
+            managementPasswordInput.value = '';
+        }
+    });
+    
+    // --- Funções dos Editores e Visualizador ---
+    async function openAuthEditor() {
+        authEditorOverlay.classList.add('visible');
+        authEditorTextarea.value = 'Carregando dados...';
+        authEditorFeedback.textContent = '';
+        try {
+            const response = await fetch('/get-auth-file');
+            if (!response.ok) throw new Error('Falha ao buscar dados.');
+            const data = await response.text();
+            authEditorTextarea.value = data;
+        } catch (error) {
+            authEditorTextarea.value = `Erro ao carregar o arquivo auth.csv:\n\n${error.message}`;
+            authEditorFeedback.textContent = 'Não foi possível carregar os dados.';
+        }
+    }
+    
+    authEditorExit.addEventListener('click', () => {
+        authEditorOverlay.classList.remove('visible');
+    });
+
+    authEditorSave.addEventListener('click', async () => {
+        const newContent = authEditorTextarea.value;
+        authEditorSave.disabled = true;
+        authEditorSave.textContent = 'Salvando...';
+        authEditorFeedback.textContent = '';
+        try {
+            const response = await fetch('/save-auth-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newContent })
+            });
+            if (!response.ok) throw new Error('O servidor retornou um erro.');
+            const result = await response.json();
+            if (result.status === 'ok') {
+                authEditorFeedback.classList.add('success');
+                authEditorFeedback.textContent = 'Salvo com sucesso!';
+            } else {
+                 throw new Error('O servidor não confirmou o salvamento.');
+            }
+        } catch (error) {
+            authEditorFeedback.classList.remove('success');
+            authEditorFeedback.textContent = `Erro ao salvar: ${error.message}`;
+        } finally {
+            authEditorSave.disabled = false;
+            authEditorSave.textContent = 'Salvar';
+            setTimeout(() => { authEditorFeedback.textContent = ''; }, 3000);
+        }
+    });
+
+    async function openDatabaseEditor() {
+        databaseEditorOverlay.classList.add('visible');
+        databaseEditorTextarea.value = 'Carregando dados dos produtos...';
+        databaseEditorFeedback.textContent = '';
+        try {
+            const response = await fetch('/get-database-file');
+            if (!response.ok) throw new Error('Falha ao buscar dados.');
+            const data = await response.text();
+            databaseEditorTextarea.value = data;
+        } catch (error) {
+            databaseEditorTextarea.value = `Erro ao carregar o arquivo database.csv:\n\n${error.message}`;
+            databaseEditorFeedback.textContent = 'Não foi possível carregar os dados.';
+        }
+    }
+
+    databaseEditorExit.addEventListener('click', () => {
+        databaseEditorOverlay.classList.remove('visible');
+    });
+
+    databaseEditorSave.addEventListener('click', async () => {
+        const newContent = databaseEditorTextarea.value;
+        databaseEditorSave.disabled = true;
+        databaseEditorSave.textContent = 'Salvando...';
+        databaseEditorFeedback.textContent = '';
+        try {
+            const response = await fetch('/save-database-file', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ content: newContent })
+            });
+            if (!response.ok) throw new Error('O servidor retornou um erro.');
+            const result = await response.json();
+            if (result.status === 'ok') {
+                databaseEditorFeedback.classList.add('success');
+                databaseEditorFeedback.textContent = 'Salvo com sucesso! As alterações podem exigir uma atualização da página.';
+            } else {
+                 throw new Error('O servidor não confirmou o salvamento.');
+            }
+        } catch (error) {
+            databaseEditorFeedback.classList.remove('success');
+            databaseEditorFeedback.textContent = `Erro ao salvar: ${error.message}`;
+        } finally {
+            databaseEditorSave.disabled = false;
+            databaseEditorSave.textContent = 'Salvar';
+            setTimeout(() => { databaseEditorFeedback.textContent = ''; }, 4000);
+        }
+    });
+
+    // NOVO: Função para o Visualizador de Logs
+    async function openLogViewer() {
+        logViewerOverlay.classList.add('visible');
+        logViewerTextarea.value = 'Carregando registro de conexões...';
+        logViewerFeedback.textContent = '';
+        try {
+            // Nova rota no backend
+            const response = await fetch('/get-access-log-file');
+            if (!response.ok) {
+                 const errorText = await response.text();
+                 throw new Error(`Falha ao buscar dados: ${errorText}`);
+            }
+            const data = await response.text();
+            logViewerTextarea.value = data || "O arquivo de log está vazio.";
+        } catch (error) {
+            logViewerTextarea.value = `Erro ao carregar o arquivo de log:\n\n${error.message}`;
+            logViewerFeedback.textContent = 'Não foi possível carregar os dados.';
+        }
+    }
+
+    logViewerExit.addEventListener('click', () => {
+        logViewerOverlay.classList.remove('visible');
+    });
+
+    // --- Eventos Globais de Inicialização ---
+    loginButton.addEventListener('click', attemptLogin);
+    [loginEmail, loginPassword].forEach(el => {
+        el.addEventListener('keydown', (ev) => {
+            if (ev.key === 'Enter') attemptLogin();
+        });
+    });
+    managementPasswordInput.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') managementPasswordSubmit.click();
+    });
+});
+</script>
+</body>
+</html>

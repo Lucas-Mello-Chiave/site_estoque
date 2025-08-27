@@ -1,3 +1,5 @@
+# estoque_service.py
+
 import requests
 import time
 import datetime
@@ -41,11 +43,13 @@ def sync_estoque():
 
             todos_dados.extend(data.get("dados", []))
             pagina += 1
-            time.sleep(0.005)  # evita flood no servidor
+            time.sleep(0.005)
 
         except Exception as e:
             print(f"Erro na sincronização: {e}")
-            break
+            # 🔹 LEVANTA A EXCEÇÃO NOVAMENTE PARA QUE O app.py POSSA CAPTURÁ-LA
+            raise e
 
+    # Esta linha só será executada se a sincronização for bem-sucedida
     save_last_sync_date()
     return todos_dados

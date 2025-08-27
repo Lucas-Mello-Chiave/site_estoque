@@ -4,7 +4,7 @@ from flask import Flask, render_template, jsonify, request
 from services.product_service import get_products_from_csv
 from services.auth_service import validate_user
 from services.log_service import log_access
-# IMPORTAR TODAS AS VARIÁVEIS DE CAMINHO
+from services.estoque_service import sync_estoque
 from config import AUTH_CSV, CSV_FILE, LOG_CSV
 
 app = Flask(__name__)
@@ -28,9 +28,21 @@ def login():
     password = (data.get("password") or "").strip()
     if not email or not password:
         return jsonify({"success": False, "message": "Credenciais ausentes"}), 400
+    
     if validate_user(email, password):
-        log_access(email)
-        return jsonify({"success": True})
+        user_ip = request.remote_addr
+        log_access(email, user_ip)
+
+        # 🔹 dispara a sincronização
+        sync_ok = True
+        try:
+            sync_estoque()
+        except Exception as e:
+            print(f"Erro ao atualizar estoque: {e}")
+            sync_ok = False
+
+        # 🔹 retorna se sincronizou ou não
+        return jsonify({"success": True, "sync_success": sync_ok})
     else:
         return jsonify({"success": False, "message": "Credenciais inválidas"}), 401
 

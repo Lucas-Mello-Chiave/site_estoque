@@ -1,6 +1,9 @@
 # config.py
 
-BASE_URL = "http://127.0.0.1:60500"
+BASE_URL = "http://192.168.1.111:60000"
+
+#para teste local
+#BASE_URL = "http://127.0.0.1:60500"
 FILIAL = 1
 
 DATA_PATH = "data"

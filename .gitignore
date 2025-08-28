@@ -1,1 +1,44 @@
-**/__pycache__/
+# Ambiente virtual
+venv/
+env/
+ENV/
+
+# Arquivos de cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Configurações do IDE/Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Arquivos de banco de dados/SQLite
+*.db
+*.sqlite3
+
+# Arquivos de log
+*.log
+
+# Arquivos sensíveis (não versionar dados reais)
+/data/
+!data/.gitkeep
+
+# Arquivos temporários
+*.tmp
+*.temp
+
+# Arquivos de configuração local
+config_local.py
+.env
+.env.local
+
+# Arquivos gerados pelo sistema
+.DS_Store
+Thumbs.db
+
+# Arquivos de distribuição/pacotes
+dist/
+build/
+*.egg-info/

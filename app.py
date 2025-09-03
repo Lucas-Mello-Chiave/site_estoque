@@ -1,11 +1,13 @@
 # app.py
 
+import os
 from flask import Flask, render_template, jsonify, request
 from services.product_service import get_products_from_csv
 from services.auth_service import validate_user
 from services.log_service import log_access
 from services.estoque_service import sync_estoque
-from config import AUTH_CSV, CSV_FILE, LOG_CSV
+from api_service import get_api_auth_token, generate_signature
+from config import AUTH_CSV, CSV_FILE, LOG_CSV, DATA_PATH, BASE_DIR
 
 app = Flask(__name__)
 
@@ -50,8 +52,9 @@ def login():
 # --- Rotas de Gerenciamento (auth.csv) ---
 @app.route("/get-auth-file")
 def get_auth_file():
+    auth_csv_path = os.path.join(BASE_DIR, DATA_PATH, AUTH_CSV)
     try:
-        with open(AUTH_CSV, "r", encoding="utf-8") as f:
+        with open(auth_csv_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
     except FileNotFoundError:
@@ -63,8 +66,9 @@ def save_auth_file():
     data = request.get_json()
     if data is None or "content" not in data:
         return jsonify({"status": "error", "message": "Conteúdo ausente."}), 400
+    auth_csv_path = os.path.join(BASE_DIR, DATA_PATH, AUTH_CSV)
     try:
-        with open(AUTH_CSV, "w", encoding="utf-8") as f:
+        with open(auth_csv_path, "w", encoding="utf-8") as f:
             f.write(data["content"])
         return jsonify({"status": "ok"})
     except Exception as e:
@@ -74,8 +78,9 @@ def save_auth_file():
 # --- Rotas de Edição de Produtos (database.csv) ---
 @app.route("/get-database-file")
 def get_database_file():
+    csv_file_path = os.path.join(BASE_DIR, DATA_PATH, CSV_FILE)
     try:
-        with open(CSV_FILE, "r", encoding="utf-8") as f:
+        with open(csv_file_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
     except FileNotFoundError:
@@ -87,8 +92,9 @@ def save_database_file():
     data = request.get_json()
     if data is None or "content" not in data:
         return jsonify({"status": "error", "message": "Conteúdo ausente."}), 400
+    csv_file_path = os.path.join(BASE_DIR, DATA_PATH, CSV_FILE)
     try:
-        with open(CSV_FILE, "w", encoding="utf-8") as f:
+        with open(csv_file_path, "w", encoding="utf-8") as f:
             f.write(data["content"])
         return jsonify({"status": "ok"})
     except Exception as e:
@@ -99,8 +105,9 @@ def save_database_file():
 @app.route("/get-access-log-file")
 def get_access_log_file():
     """API para ler e retornar o conteúdo do arquivo registro_acessos.csv."""
+    log_csv_path = os.path.join(BASE_DIR, DATA_PATH, LOG_CSV)
     try:
-        with open(LOG_CSV, "r", encoding="utf-8") as f:
+        with open(log_csv_path, "r", encoding="utf-8") as f:
             content = f.read()
         return content, 200, {'Content-Type': 'text/plain; charset=utf-8'}
     except FileNotFoundError:

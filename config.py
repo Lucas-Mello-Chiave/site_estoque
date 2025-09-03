@@ -1,17 +1,23 @@
 # config.py
 
-BASE_URL = "http://192.168.1.111:60000"
+import os
 
-#para teste local
-#BASE_URL = "http://127.0.0.1:60500"
+BASE_URL = "http://201.22.86.125:60000"
 FILIAL = 1
 
-DATA_PATH = "data"
-CSV_FILE = f"{DATA_PATH}/database.csv"
-LAST_SYNC_FILE = f"{DATA_PATH}/last_sync.txt"
+# --- CREDENCIAIS DA API ---
+API_SENHA = "V7!xL9@qP#zR2$wM"
+API_SERIE = "HIEAPA-605662-FWKD"
 
-# CSV com emails e senhas (formato: cabeçalho "email;password")
-AUTH_CSV = f"{DATA_PATH}/auth.csv"
+# --- CONFIGURAÇÃO DE CAMINHOS DE ARQUIVO ---
+# Defina o caminho base do projeto
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# NOVO: Arquivo para registrar os logins bem-sucedidos
-LOG_CSV = f"{DATA_PATH}/registro_acessos.csv"
+# O caminho de dados agora inclui a pasta 'salva'
+DATA_PATH = os.path.join("data")
+
+# Arquivos que serão salvos dentro da pasta DATA_PATH
+CSV_FILE = "data\database.csv"
+AUTH_CSV = "auth.csv"
+LAST_SYNC_FILE = "last_sync.txt"
+LOG_CSV = "registro_acessos.csv"

@@ -21,9 +21,7 @@ __pycache__/
 # Arquivos de log
 *.log
 
-# Arquivos sensíveis (não versionar dados reais)
-/data/
-!data/.gitkeep
+
 
 # Arquivos temporários
 *.tmp

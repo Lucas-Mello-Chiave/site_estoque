@@ -2,7 +2,9 @@
 
 import os
 
-BASE_URL = "http://201.22.86.125:60000"
+BASE_URL = "http://127.0.0.1:60000"
+
+#BASE_URL = "http://201.22.86.125:60000"
 FILIAL = 1
 
 # --- CREDENCIAIS DA API ---

@@ -19,7 +19,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 DATA_PATH = os.path.join("data")
 
 # Arquivos que serão salvos dentro da pasta DATA_PATH
-CSV_FILE = "data\database.csv"
+CSV_FILE = os.path.join(DATA_PATH, "database.csv")
 AUTH_CSV = "auth.csv"
 LAST_SYNC_FILE = "last_sync.txt"
 LOG_CSV = "registro_acessos.csv"

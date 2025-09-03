@@ -1,12 +1,14 @@
 import csv
 from config import CSV_FILE
-
-
+import os
+from config import CSV_FILE, BASE_DIR
 def get_products_from_csv():
-    """Lê o arquivo CSV e retorna uma lista de produtos"""
     products = []
+    # Use o caminho absoluto combinando BASE_DIR com CSV_FILE
+    csv_path = os.path.join(BASE_DIR, CSV_FILE)
+    
     try:
-        with open(CSV_FILE, mode="r", encoding="utf-8") as csv_file:
+        with open(csv_path, mode="r", encoding="utf-8") as csv_file:
             csv_reader = csv.DictReader(csv_file, delimiter=";")
 
             for row in csv_reader:
